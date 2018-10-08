@@ -398,7 +398,7 @@ build_tba() {
 
     ANDROID_NDK_HOME="${HOME}"/.mozbuild/android-ndk-r15c
     ANDROID_SDK_HOME="${HOME}"/.mozbuild/android-sdk-linux
-    ANDROID_SDK_ROOT="${ANDROID_SDK_HOME}"/platforms/android-23
+    ANDROID_SDK_ROOT="${ANDROID_SDK_HOME}"
     ANDROID_HOME="${ANDROID_SDK_ROOT}"
 
     NDK_BASE="${ANDROID_NDK_HOME}"
@@ -465,7 +465,13 @@ build_tba() {
     fi
 
     echo "Eight, Build and package!"
-    mv ../gradle ./
+    # These don't respect $HOME, but it doesn't seem like it matters
+    if [ -d ../.gradle ]; then
+        mv ../.gradle ./
+    fi
+    if [ -d ../.android ]; then
+        mv ../.android ./
+    fi
     pushd tor-browser
     time ./mach build && time ./mach package
     popd

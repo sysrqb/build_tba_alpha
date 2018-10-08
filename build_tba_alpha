@@ -9,10 +9,10 @@ if [ -z "${TORBROWSER_GIT_URL}" ]; then
     TORBROWSER_GIT_URL=https://git.torproject.org/tor-browser.git
 fi
 if [ -z "${TORBROWSER_GIT_TAG}" ]; then
-    TORBROWSER_GIT_TAG=tor-browser-mobile-60.1.0esr-1.0-build2
+    TORBROWSER_GIT_TAG=tor-browser-mobile-60.2.0esr-1.0-build1
 fi
 if [ -z "${TORBROWSER_GIT_COMMIT_HASH}" ]; then
-    TORBROWSER_GIT_COMMIT_HASH=a0620db9e7cd08e3d67a42d0c5b1067d5b3ed355
+    TORBROWSER_GIT_COMMIT_HASH=bd090e4ef466374ca3c231efa350159f7c0ab96c
 fi
 if [ -z "${TORBROWSER_GIT_REPO_DIR}" ]; then
     TORBROWSER_GIT_REPO_DIR=tor-browser
@@ -21,10 +21,10 @@ if [ -z "${TORBUTTON_GIT_URL}" ]; then
     TORBUTTON_GIT_URL=https://git.torproject.org/torbutton.git
 fi
 if [ -z "${TORBUTTON_GIT_TAG}" ]; then
-    TORBUTTON_GIT_TAG=2.0.4
+    TORBUTTON_GIT_TAG=2.0.6
 fi
 if [ -z "${TORBUTTON_GIT_COMMIT_HASH}" ]; then
-    TORBUTTON_GIT_COMMIT_HASH=dc772e2c9f17cb0cf5d006f24c35430fadaf1aae
+    TORBUTTON_GIT_COMMIT_HASH=8e70b5f35f59ba6bbb563fbef2a4853c4d657580
 fi
 if [ -z "${TORBUTTON_GIT_REPO_DIR}" ]; then
     TORBUTTON_GIT_REPO_DIR=torbutton
@@ -51,10 +51,10 @@ if [ -z "${HTTPS_EVERYWHERE_FILE}" ]; then
     HTTPS_EVERYWHERE_FILE=https-everywhere-eff@eff.org.xpi
 fi
 if [ -z "${NOSCRIPT_URL}" ]; then
-    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.8.16-an+fx.xpi
+    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.9.1-an+fx.xpi
 fi
 if [ -z "${NOSCRIPT_HASH}" ]; then
-    NOSCRIPT_HASH=fdc539412a61e6109b9fd331c90bd73faa787eefe1ee8d06b57dc3d906c541cd
+    NOSCRIPT_HASH=68c3ef1b753210d376ab9b9c73fa053043f4f0f4cab219e317759fb32b104a27
 fi
 if [ -z "${NOSCRIPT_FILE}" ]; then
     NOSCRIPT_FILE={73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
@@ -66,8 +66,8 @@ if [ -z "${MOZ_FORCE_BOOTSTRAP}" ]; then
     MOZ_FORCE_BOOTSTRAP=
 fi
 
-if [ -z "${IGNORE_GIT_TAG}" ]; then
-    IGNORE_GIT_TAG=
+if [ -z "${GET_SHELL}" ]; then
+    GET_SHELL=
 fi
 
 
@@ -90,12 +90,8 @@ has_git_hash() {
 
     commit_hash=`git log -1 --pretty=format:%H ${GIT_TAG}`
     if [ ! $? = 0 ]; then
-        if [ -n "${IGNORE_GIT_TAG}" ]; then
-            echo "Skipping git tag check"
-        else
-            echo "Git tag '${GIT_TAG}' does not exist"
-            return 1;
-        fi
+        echo "Git tag '${GIT_TAG}' does not exist"
+        return 1;
     fi
     if [ "${commit_hash}" = "${GIT_COMMIT_HASH}" ]; then
         echo "Git commit hash '${GIT_COMMIT_HASH}' is good!"
@@ -114,13 +110,9 @@ has_git_tag_and_hash() {
     eval "GIT_TAG=\${${GIT_REPO_GIT_TAG}}"
     eval "EXPECTED_HASH=\${${GIT_REPO_GIT_COMMIT_HASH}}"
 
-    if [ -n "${IGNORE_GIT_TAG}" ]; then
-        echo "Skipping git tag check"
-    else
-        has_git_tag "${GIT_TAG}"
-        if [ ! $? = 0 ]; then
-            return 1
-        fi
+    has_git_tag "${GIT_TAG}"
+    if [ ! $? = 0 ]; then
+        return 1
     fi
     has_git_hash "${GIT_TAG}" "${EXPECTED_HASH}"
     if [ ! $? = 0 ]; then
@@ -332,8 +324,10 @@ mach_bootstrap() {
 }
 
 mach_configure() {
+    . `pwd`/.cargo/env
+    echo $PATH
     pushd tor-browser
-    git clean -fdx
+    #git clean -fdx
     ./mach configure --with-tor-browser-version=8.0 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
     save=$?
     popd
@@ -342,7 +336,7 @@ mach_configure() {
 
 build_torbutton() {
     pushd torbutton
-    git clean -fdx
+    #git clean -fdx
     ./makexpi.sh
     save=$?
     popd
@@ -424,15 +418,19 @@ build_tba() {
     echo "Sorry, we're resetting PATH"
     export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${SDK_BASE}/platform-tools"
 
+    if [ -n "${GET_SHELL}" ]; then
+        bash
+        exit;
+    fi
     mach_bootstrap
     if [ ! $? = 0 ]; then
         echo "Bootstrap failed."
         exit 1
     fi
 
-    echo "Third, let's change the project name."
-    sed --in-place 's/^ANDROID_PACKAGE_NAME=org.torproject.torbrowser.*$/ANDROID_PACKAGE_NAME=org.torproject.torbrowser_alpha/' \
-        tor-browser/mobile/android/branding/torbrowser/configure.sh
+    #echo "Third, let's change the project name."
+    #sed --in-place 's/^ANDROID_PACKAGE_NAME=org.torproject.torbrowser.*$/ANDROID_PACKAGE_NAME=org.torproject.torbrowser_alpha/' \
+    #    tor-browser/mobile/android/branding/torbrowser/configure.sh
 
     echo "Fourth, let's configure it."
     mach_configure
@@ -486,6 +484,7 @@ build_tba() {
         mv ../.android ./
     fi
     pushd tor-browser
+    ./mach gradle clean
     time ./mach build && time ./mach package
     popd
 }

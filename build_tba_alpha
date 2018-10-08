@@ -361,9 +361,10 @@ build_https_everywhere() {
 }
 
 copy_https_everywhere() {
-    XPI_NAME="$1"
-    EXTENSIONS_DIR="$2"
+    #XPI_NAME="$1"
+    #EXTENSIONS_DIR="$2"
     #cp "https-everywhere/pkg/${XPI_NAME}" "${EXTENSIONS_DIR}"/https-everywhere-eff@eff.org.xpi
+    EXTENSIONS_DIR="$1"
     cp "${HTTPS_EVERYWHERE_FILE}" "${EXTENSIONS_DIR}"
     return $?
 }
@@ -416,7 +417,7 @@ build_tba() {
     fi
 
     echo "Third, let's change the project name."
-    sed --in-place 's/ANDROID_PACKAGE_NAME=org.torproject.torbrowser/ANDROID_PACKAGE_NAME=org.torproject.torbrowser_alpha/' \
+    sed --in-place 's/^ANDROID_PACKAGE_NAME=org.torproject.torbrowser.*$/ANDROID_PACKAGE_NAME=org.torproject.torbrowser_alpha/' \
         tor-browser/mobile/android/branding/torbrowser/configure.sh
 
     echo "Fourth, let's configure it."

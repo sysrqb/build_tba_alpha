@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+#set -x
 # Build Tor Browser for Android - Alpha
 #
 # This build script creates a Tor Browser for Android (TBA) package
@@ -115,7 +115,7 @@ clone() {
     # Sorry, this are disgusting.
     eval "GIT_REPO_URL=\${${GIT_REPO_GIT_URL}}"
 
-    "${TORSOCKS}" git clone "${GIT_REPO_URL}" "${REPO_DIR}"
+    ${TORSOCKS}git clone "${GIT_REPO_URL}" "${REPO_DIR}"
     if [ ! $? = 0 ]; then
         echo "Git clone '${GIT_REPO_URL}' failed"
         exit 1
@@ -134,7 +134,7 @@ fetch() {
     pushd "${REPO_DIR}"
     has_git_tag_and_hash "${GIT_REPO}"
     if [ $? = 1 ]; then
-        "${TORSOCKS}" git fetch
+        ${TORSOCKS}git fetch
         has_git_tag_and_hash "${GIT_REPO}"
         success=$?
     fi
@@ -183,7 +183,7 @@ download() {
     else 
         CMD="wget -O -"
     fi
-    DOWNLOAD_MESSAGE=`${TORSOCKS} $CMD "${XPI_URL}" > "${OUTPUT_FILE}"`
+    DOWNLOAD_MESSAGE=`${TORSOCKS}${CMD} "${XPI_URL}" > "${OUTPUT_FILE}"`
     return $?
 }
    
@@ -229,11 +229,10 @@ fetch_extensions() {
 }
 
 set_torsocks() {
-    if [ -z `which torsocks` ]; then
+    if [ -n "`which torsocks`" ]; then
         echo "torsocks found. Connections will go over tor."
-        TORSOCKS=torsocks
+        TORSOCKS="torsocks "
     else
-        TORSOCKS=time
         echo "torsocks not found. Connections will not go over tor."
     fi
 } 
@@ -258,16 +257,16 @@ checkout_torbrowser_tag() {
 
 mach_bootstrap() {
     if [ -n "${MOZ_FORCE_BOOTSTRAP}" ]; then
-       # Fallthrough
-    elsif [ -d .mozbuild -a -d .mozbuild/android-sdk-linux -a -d .mozbuild/android-ndk-r15c ]
-       # Fallthrough
-    else 
+        # Fallthrough
+        echo "Forcing bootstrap"
+    elif [ -d .mozbuild -a -d .mozbuild/android-sdk-linux -a -d .mozbuild/android-ndk-r15c ]; then
         echo "Good, it looks like we're bootstrapped."
         return 0
+    else
+        echo "Okay, let's run bootstrap"
     fi
-    echo "Okay, let's run bootstrap"
     pushd tor-browser
-    ./mach bootstrap
+    ./mach bootstrap --no-interactive
 
     . `pwd`/.cargo/env
     rustup target add armv7-linux-androideabi

@@ -41,6 +41,15 @@ fi
 if [ -z "${HTTPS_EVERYWHERE_GIT_REPO_DIR}" ]; then
     HTTPS_EVERYWHERE_GIT_REPO_DIR=https-everywhere
 fi
+if [ -z "${HTTPS_EVERYWHERE_URL}" ]; then
+    HTTPS_EVERYWHERE_URL=https://www.eff.org/files/https-everywhere-latest.xpi
+fi
+if [ -z "${HTTPS_EVERYWHERE_HASH}" ]; then
+    HTTPS_EVERYWHERE_HASH=b37b8ddc871e539e97075b7ae9555c076003a51b389776bc2a4729e3f13690ce
+fi
+if [ -z "${HTTPS_EVERYWHERE_FILE}" ]; then
+    HTTPS_EVERYWHERE_FILE=https-everywhere-eff@eff.org.xpi
+fi
 if [ -z "${NOSCRIPT_URL}" ]; then
     NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.8.16-an+fx.xpi
 fi
@@ -219,10 +228,12 @@ download_or_fail() {
 
 download_extensions() {
     download_or_fail NOSCRIPT
+    download_or_fail HTTPS_EVERYWHERE
 }
 
 fetch_extensions() {
-    for repo in TORBROWSER TORBUTTON HTTPS_EVERYWHERE;
+    #for repo in TORBROWSER TORBUTTON HTTPS_EVERYWHERE;
+    for repo in TORBROWSER TORBUTTON;
     do
         fetch_or_fail $repo
     done
@@ -336,9 +347,10 @@ copy_torbutton() {
 build_https_everywhere() {
     XPI_NAME="$1"
     pushd https-everywhere
+    #git checkout "${HTTPS_EVERYWHERE_GIT_TAG}"
     #git clean -fdx
     #./install-dev-dependencies.sh --no-prompt
-    #./make.sh  "${HTTPS_EVERYWHERE_GIT_TAG}"
+    #./make.sh "${HTTPS_EVERYWHERE_GIT_TAG}"
     save=0
     if [ ! -f "pkg/${XPI_NAME}" ]; then
         echo "https-everywhere has many dependencies. Please build it yourself (or download it and place it in `pwd`/pkg/${XPI_NAME})"
@@ -351,7 +363,8 @@ build_https_everywhere() {
 copy_https_everywhere() {
     XPI_NAME="$1"
     EXTENSIONS_DIR="$2"
-    cp "https-everywhere/pkg/${XPI_NAME}" "${EXTENSIONS_DIR}"/https-everywhere-eff@eff.org.xpi
+    #cp "https-everywhere/pkg/${XPI_NAME}" "${EXTENSIONS_DIR}"/https-everywhere-eff@eff.org.xpi
+    cp "${HTTPS_EVERYWHERE_FILE}" "${EXTENSIONS_DIR}"
     return $?
 }
 
@@ -429,13 +442,14 @@ build_tba() {
     fi
 
     echo "Six, Copy https-everywhere."
-    XPI_NAME=https-everywhere-${HTTPS_EVERYWHERE_GIT_TAG}-eff.xpi
-    build_https_everywhere "${XPI_NAME}"
-    if [ ! $? = 0 ]; then
-        echo "Building https-everywhere failed."
-        exit 1
-    fi
-    copy_https_everywhere "${XPI_NAME}" "${EXTENSIONS_DIR}"
+    #XPI_NAME=https-everywhere-${HTTPS_EVERYWHERE_GIT_TAG}-eff.xpi
+    #build_https_everywhere "${XPI_NAME}"
+    #if [ ! $? = 0 ]; then
+    #    echo "Building https-everywhere failed."
+    #    exit 1
+    #fi
+    #copy_https_everywhere "${XPI_NAME}" "${EXTENSIONS_DIR}"
+    copy_https_everywhere "${EXTENSIONS_DIR}"
     if [ ! $? = 0 ]; then
         echo "Copying https-everywhere failed."
         exit 1

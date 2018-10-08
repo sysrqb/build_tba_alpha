@@ -281,6 +281,20 @@ mach_artifact() {
     return $save
 }
 
+mount_fs() {
+    if [ ! -f "/proc/self" ]; then
+        sudo mount -t proc proc /proc/
+    fi
+
+    if [ ! -d "/sys/bus" ]; then
+        sudo mount -t sysfs sysfs /sys/
+    fi
+
+    if [ `mount | grep -q dev/shm` ]; then
+        sudo mount -t tmpfs shm /dev/shm/
+    fi
+}
+
 mach_bootstrap() {
     if [ -n "${MOZ_FORCE_BOOTSTRAP}" ]; then
         # Fallthrough

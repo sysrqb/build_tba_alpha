@@ -310,7 +310,7 @@ mach_bootstrap() {
     elif [ -n "${MOZ_NO_LOOP_BOOTSTRAP}" ]; then
 	    echo "Bootstrapping complete"
     else
-	    # Let's run it again, so we can finishin bootstrapping rust
+	    # Let's run it again, so we can finish bootstrapping rust
 	    export MOZ_FORCE_BOOTSTRAP=1
 	    export MOZ_NO_LOOP_BOOTSTRAP=1
 	    mach_bootstrap
@@ -432,15 +432,15 @@ build_tba() {
     #sed --in-place 's/^ANDROID_PACKAGE_NAME=org.torproject.torbrowser.*$/ANDROID_PACKAGE_NAME=org.torproject.torbrowser_alpha/' \
     #    tor-browser/mobile/android/branding/torbrowser/configure.sh
 
+    EXTENSIONS_DIR=tor-browser/mobile/android/torbrowser/assets/distribution/extensions/
+    mkdir -p "${EXTENSIONS_DIR}"
+
     echo "Fourth, let's configure it."
     mach_configure
     if [ ! $? = 0 ]; then
         echo "Configure failed."
         exit 1
     fi
-
-    EXTENSIONS_DIR=tor-browser/mobile/android/torbrowser/assets/distribution/extensions/
-    mkdir -p "${EXTENSIONS_DIR}"
 
     echo "Fifth, Build and copy torbutton."
     build_torbutton

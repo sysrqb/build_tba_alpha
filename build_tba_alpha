@@ -9,10 +9,10 @@ if [ -z "${TORBROWSER_GIT_URL}" ]; then
     TORBROWSER_GIT_URL=https://git.torproject.org/tor-browser.git
 fi
 if [ -z "${TORBROWSER_GIT_TAG}" ]; then
-    TORBROWSER_GIT_TAG=tor-browser-mobile-60.2.0esr-1.0-build1
+    TORBROWSER_GIT_TAG=tor-browser-60.2.1esr-8.5-1-build1
 fi
 if [ -z "${TORBROWSER_GIT_COMMIT_HASH}" ]; then
-    TORBROWSER_GIT_COMMIT_HASH=bd090e4ef466374ca3c231efa350159f7c0ab96c
+    TORBROWSER_GIT_COMMIT_HASH=0c004047822a94a6e16851a9f46d237be10eebce
 fi
 if [ -z "${TORBROWSER_GIT_REPO_DIR}" ]; then
     TORBROWSER_GIT_REPO_DIR=tor-browser
@@ -21,10 +21,10 @@ if [ -z "${TORBUTTON_GIT_URL}" ]; then
     TORBUTTON_GIT_URL=https://git.torproject.org/torbutton.git
 fi
 if [ -z "${TORBUTTON_GIT_TAG}" ]; then
-    TORBUTTON_GIT_TAG=2.0.6
+    TORBUTTON_GIT_TAG=2.1
 fi
 if [ -z "${TORBUTTON_GIT_COMMIT_HASH}" ]; then
-    TORBUTTON_GIT_COMMIT_HASH=8e70b5f35f59ba6bbb563fbef2a4853c4d657580
+    TORBUTTON_GIT_COMMIT_HASH=cd85d9dd4e0a225688d1785ff4cb421abca1e16a
 fi
 if [ -z "${TORBUTTON_GIT_REPO_DIR}" ]; then
     TORBUTTON_GIT_REPO_DIR=torbutton
@@ -45,16 +45,16 @@ if [ -z "${HTTPS_EVERYWHERE_URL}" ]; then
     HTTPS_EVERYWHERE_URL=https://www.eff.org/files/https-everywhere-latest.xpi
 fi
 if [ -z "${HTTPS_EVERYWHERE_HASH}" ]; then
-    HTTPS_EVERYWHERE_HASH=b37b8ddc871e539e97075b7ae9555c076003a51b389776bc2a4729e3f13690ce
+    HTTPS_EVERYWHERE_HASH=1a1987182c6391af6d54d4724447fd066ff1953790b0e1c3749571847ad3a112
 fi
 if [ -z "${HTTPS_EVERYWHERE_FILE}" ]; then
     HTTPS_EVERYWHERE_FILE=https-everywhere-eff@eff.org.xpi
 fi
 if [ -z "${NOSCRIPT_URL}" ]; then
-    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.9.1-an+fx.xpi
+    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.8.16-an+fx.xpi
 fi
 if [ -z "${NOSCRIPT_HASH}" ]; then
-    NOSCRIPT_HASH=68c3ef1b753210d376ab9b9c73fa053043f4f0f4cab219e317759fb32b104a27
+    NOSCRIPT_HASH=fdc539412a61e6109b9fd331c90bd73faa787eefe1ee8d06b57dc3d906c541cd
 fi
 if [ -z "${NOSCRIPT_FILE}" ]; then
     NOSCRIPT_FILE={73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
@@ -412,8 +412,8 @@ build_tba() {
     export TB_BUILD_WITH_DISTRIBUTION=1
     export MOZCONFIG=${HOME}/tor-browser/.mozconfig-android
 
-    # From `perl projects/firefox/get-moz-build-date 2018 60.1.0`
-    export MOZ_BUILD_DATE=20180204020101
+    # From `perl projects/firefox/get-moz-build-date 2018 60.2.1`
+    export MOZ_BUILD_DATE=20180204030201
 
     echo "Sorry, we're resetting PATH"
     export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${SDK_BASE}/platform-tools"

@@ -1,0 +1,425 @@
+#!/bin/bash
+
+set -x
+# Build Tor Browser for Android - Alpha
+#
+# This build script creates a Tor Browser for Android (TBA) package
+
+if [ -z "${TORBROWSER_GIT_URL}" ]; then
+    TORBROWSER_GIT_URL=https://git.torproject.org/tor-browser.git
+fi
+if [ -z "${TORBROWSER_GIT_TAG}" ]; then
+    TORBROWSER_GIT_TAG=tor-browser-mobile-60.1.0esr-1.0-build2
+fi
+if [ -z "${TORBROWSER_GIT_COMMIT_HASH}" ]; then
+    TORBROWSER_GIT_COMMIT_HASH=a0620db9e7cd08e3d67a42d0c5b1067d5b3ed355
+fi
+if [ -z "${TORBROWSER_GIT_REPO_DIR}" ]; then
+    TORBROWSER_GIT_REPO_DIR=tor-browser
+fi
+if [ -z "${TORBUTTON_GIT_URL}" ]; then
+    TORBUTTON_GIT_URL=https://git.torproject.org/torbutton.git
+fi
+if [ -z "${TORBUTTON_GIT_TAG}" ]; then
+    TORBUTTON_GIT_TAG=2.0.4
+fi
+if [ -z "${TORBUTTON_GIT_COMMIT_HASH}" ]; then
+    TORBUTTON_GIT_COMMIT_HASH=dc772e2c9f17cb0cf5d006f24c35430fadaf1aae
+fi
+if [ -z "${TORBUTTON_GIT_REPO_DIR}" ]; then
+    TORBUTTON_GIT_REPO_DIR=torbutton
+fi
+if [ -z "${HTTPS_EVERYWHERE_GIT_URL}" ]; then
+    HTTPS_EVERYWHERE_GIT_URL=https://git.torproject.org/https-everywhere.git
+fi
+if [ -z "${HTTPS_EVERYWHERE_GIT_TAG}" ]; then
+    HTTPS_EVERYWHERE_GIT_TAG=2018.8.22
+fi
+if [ -z "${HTTPS_EVERYWHERE_GIT_COMMIT_HASH}" ]; then
+    HTTPS_EVERYWHERE_GIT_COMMIT_HASH=161a08daedaff6c4da2b653900f3977755453563
+fi
+if [ -z "${HTTPS_EVERYWHERE_GIT_REPO_DIR}" ]; then
+    HTTPS_EVERYWHERE_GIT_REPO_DIR=https-everywhere
+fi
+if [ -z "${NOSCRIPT_URL}" ]; then
+    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.8.16-an+fx.xpi
+fi
+if [ -z "${NOSCRIPT_HASH}" ]; then
+    NOSCRIPT_HASH=fdc539412a61e6109b9fd331c90bd73faa787eefe1ee8d06b57dc3d906c541cd
+fi
+if [ -z "${NOSCRIPT_FILE}" ]; then
+    NOSCRIPT_FILE={73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
+fi
+if [ -z "${TBA_BUILD_DIR}" ]; then
+    TBA_BUILD_DIR=tba_build_dir
+fi
+if [ -z "${MOZ_FORCE_BOOTSTRAP}" ]; then
+    MOZ_FORCE_BOOTSTRAP=
+fi
+
+
+TORSOCKS=
+
+has_git_tag() {
+    GIT_TAG="$1"
+
+    git_log=`git log -1 ${GIT_TAG}`
+    if [ ! $? = 0 ]; then
+        echo "Git tag '${GIT_TAG}' does not exist"
+        return 1
+    fi
+    return 0
+}
+
+has_git_hash() {
+    GIT_TAG="$1"
+    GIT_COMMIT_HASH="$2"
+
+    commit_hash=`git log -1 --pretty=format:%H ${GIT_TAG}`
+    if [ ! $? = 0 ]; then
+        echo "Git tag '${GIT_TAG}' does not exist"
+        return 1;
+    fi
+    if [ "${commit_hash}" = "${GIT_COMMIT_HASH}" ]; then
+        echo "Git commit hash '${GIT_COMMIT_HASH}' is good!"
+        return 0;
+    fi
+    echo "Git commit hash '${GIT_COMMIT_HASH}' on tag '${GIT_TAG}' does not exist"
+    return 1;
+}
+
+has_git_tag_and_hash() {
+    GIT_REPO="$1"
+    GIT_REPO_GIT_TAG="${GIT_REPO}_GIT_TAG"
+    GIT_REPO_GIT_COMMIT_HASH="${GIT_REPO}_GIT_COMMIT_HASH"
+
+    # Sorry, these are disgusting.
+    eval "GIT_TAG=\${${GIT_REPO_GIT_TAG}}"
+    eval "EXPECTED_HASH=\${${GIT_REPO_GIT_COMMIT_HASH}}"
+
+    has_git_tag "${GIT_TAG}"
+    if [ ! $? = 0 ]; then
+        return 1
+    fi
+    has_git_hash "${GIT_TAG}" "${EXPECTED_HASH}"
+    if [ ! $? = 0 ]; then
+        return 1
+    fi
+}
+
+clone() {
+    GIT_REPO="$1"
+    REPO_DIR="$2"
+    GIT_REPO_GIT_URL="${GIT_REPO}_GIT_URL" 
+    
+    # Sorry, this are disgusting.
+    eval "GIT_REPO_URL=\${${GIT_REPO_GIT_URL}}"
+
+    "${TORSOCKS}" git clone "${GIT_REPO_URL}" "${REPO_DIR}"
+    if [ ! $? = 0 ]; then
+        echo "Git clone '${GIT_REPO_URL}' failed"
+        exit 1
+    fi
+    pushd "${REPO_DIR}"
+    has_git_tag_and_hash "${GIT_REPO}"
+    popd
+    return $?
+}
+
+fetch() {
+    GIT_REPO="$1"
+    REPO_DIR="$2"
+    success=0
+
+    pushd "${REPO_DIR}"
+    has_git_tag_and_hash "${GIT_REPO}"
+    if [ $? = 1 ]; then
+        "${TORSOCKS}" git fetch
+        has_git_tag_and_hash "${GIT_REPO}"
+        success=$?
+    fi
+    popd
+    return "${success}"
+}
+
+fetch_or_fail() {
+    GIT_REPO="$1"
+    GIT_REPO_GIT_REPO_DIR="${GIT_REPO}_GIT_REPO_DIR"
+
+    # Sorry, these are disgusting.
+    eval "REPO_DIR=\${${GIT_REPO_GIT_REPO_DIR}}"
+
+    if [ -d "${REPO_DIR}" -a -d "${REPO_DIR}/.git" ]; then
+        fetch "${GIT_REPO}" "${REPO_DIR}"
+    else
+        clone "${GIT_REPO}" "${REPO_DIR}"
+    fi
+    if [ ! $? = 0 ]; then
+        echo "Failing. ${GIT_REPO} in ${REPO_DIR} is in unknown state."
+        exit 1
+    fi
+}
+
+check_sha256sum() {
+    FILEPATH="$1"
+    EXPECTED_HASH="$2"
+
+    sha256sum "${FILEPATH}" | grep "^${EXPECTED_HASH}  ${FILEPATH}$"
+    return $?
+}
+
+DOWNLOAD_MESSAGE=
+download() {
+    XPI_URL="$1"
+    OUTPUT_FILE="$2"
+    CMD=
+
+    if [ -f "${OUTPUT_FILE}" ]; then
+        echo "${OUTPUT_FILE}" already exists. Skipping download.
+        return 0
+    fi
+    if [ -n "`which curl`" ]; then
+        CMD=curl
+    else 
+        CMD="wget -O -"
+    fi
+    DOWNLOAD_MESSAGE=`${TORSOCKS} $CMD "${XPI_URL}" > "${OUTPUT_FILE}"`
+    return $?
+}
+   
+download_or_fail() {
+    XPI_NAME="$1"
+    XPI_NAME_URL="${XPI_NAME}_URL"
+    XPI_NAME_FILE="${XPI_NAME}_FILE"
+    XPI_FILE_HASH="${XPI_NAME}_HASH"
+
+    # Sorry, these are disgusting.
+    eval "XPI_URL=\${${XPI_NAME_URL}}"
+    eval "XPI_FILE=\${${XPI_NAME_FILE}}"
+    eval "XPI_HASH=\${${XPI_FILE_HASH}}"
+
+    download "${XPI_URL}" "${XPI_FILE}"
+    if [ ! $? = 0 ]; then
+        echo "Downloading ${XPI_NAME} from \'${XPI_URL}\' failed:"
+        echo "${DOWNLOAD_MESSAGE}"
+        exit 1
+    fi
+
+    check_sha256sum "${XPI_FILE}" "${XPI_HASH}"
+    if [ ! $? = 0 ]; then
+        echo "${XPI_NAME} from '${XPI_URL}' failed checksum"
+        echo Expected: "${XPI_HASH}"
+        echo Have: `sha256sum "${XPI_FILE}" | cut -c -65`
+        exit 1
+    fi
+
+    # Clear $DOWNLOAD_MESSAGE, in case it was set during the last download
+    unset DOWNLOAD_MESSAGE
+}
+
+download_extensions() {
+    download_or_fail NOSCRIPT
+}
+
+fetch_extensions() {
+    for repo in TORBROWSER TORBUTTON HTTPS_EVERYWHERE;
+    do
+        fetch_or_fail $repo
+    done
+}
+
+set_torsocks() {
+    if [ -z `which torsocks` ]; then
+        echo "torsocks found. Connections will go over tor."
+        TORSOCKS=torsocks
+    else
+        TORSOCKS=time
+        echo "torsocks not found. Connections will not go over tor."
+    fi
+} 
+
+enter_tba_build_dir() {
+    if [ ! -d "${TBA_BUILD_DIR}" ]; then
+        mkdir "${TBA_BUILD_DIR}"
+        if [ ! -d "${TBA_BUILD_DIR}" ]; then
+            echo "Making tba_build_dir failed. Failing."
+            exit -1
+        fi
+    fi
+    cd "${TBA_BUILD_DIR}"
+    return $?
+}
+
+checkout_torbrowser_tag() {
+    pushd tor-browser
+    git checkout "${TORBROWSER_GIT_TAG}"
+    popd
+}
+
+mach_bootstrap() {
+    if [ -n "${MOZ_FORCE_BOOTSTRAP}" ]; then
+       # Fallthrough
+    elsif [ -d .mozbuild -a -d .mozbuild/android-sdk-linux -a -d .mozbuild/android-ndk-r15c ]
+       # Fallthrough
+    else 
+        echo "Good, it looks like we're bootstrapped."
+        return 0
+    fi
+    echo "Okay, let's run bootstrap"
+    pushd tor-browser
+    ./mach bootstrap
+
+    . `pwd`/.cargo/env
+    rustup target add armv7-linux-androideabi
+
+    save=$?
+    popd
+    return $save
+}
+
+mach_configure() {
+    pushd tor-browser
+    git clean -fdx
+    ./mach configure --with-tor-browser-version=8.0 --with-distribution-id=org.torproject --enable-bundled-fonts
+    save=$?
+    popd
+    return $save
+}
+
+build_torbutton() {
+    pushd torbutton
+    git clean -fdx
+    ./makexpi.sh
+    save=$?
+    popd
+    return ${save}
+}
+
+copy_torbutton() {
+    EXTENSIONS_DIR="$1"
+    cp "torbutton/pkg/torbutton-${TORBUTTON_GIT_TAG}.xpi" "${EXTENSIONS_DIR}"/torbutton@torproject.org.xpi
+    return $?
+}
+
+build_https_everywhere() {
+    XPI_NAME="$1"
+    pushd https-everywhere
+    #git clean -fdx
+    #./install-dev-dependencies.sh
+    #./make.sh
+    save=0
+    if [ ! -f "pkg/${XPI_NAME}" ]; then
+        echo "https-everywhere has many dependencies. Please build it yourself (or download it and place it in `pwd`/pkg/${XPI_NAME})"
+        save=1
+    fi
+    popd
+    return ${save}
+}
+
+copy_https_everywhere() {
+    XPI_NAME="$1"
+    EXTENSIONS_DIR="$2"
+    cp "https-everywhere/pkg/${XPI_NAME}" "${EXTENSIONS_DIR}"/https-everywhere-eff@eff.org.xpi
+    return $?
+}
+
+copy_noscript() {
+    EXTENSIONS_DIR="$1"
+    cp "${NOSCRIPT_FILE}" "${EXTENSIONS_DIR}"
+    return $?
+}
+
+build_tba() {
+    enter_tba_build_dir
+
+    if [ ! $? = 0 ]; then
+        echo "Entering the build directory failed. Exiting."
+        exit 1
+    fi
+
+    set_torsocks
+    download_extensions
+    fetch_extensions
+
+    echo "We have all the components. Now let's build!"
+    echo "First, let's checkout the tor-browser tag."
+    checkout_torbrowser_tag
+
+    echo "Second, let's confirm firefox is bootstrapped."
+
+    OLD_HOME="${HOME}"
+    export HOME=`pwd`
+
+    ANDROID_NDK_HOME="${HOME}"/.mozbuild/android-ndk-r15c
+    ANDROID_SDK_HOME="${HOME}"/.mozbuild/android-sdk-linux
+    ANDROID_HOME="${ANDROID_SDK_ROOT}"
+
+    NDK_BASE="${ANDROID_NDK_HOME}"
+    SDK_BASE="${ANDROID_SDK_HOME}"
+
+    TB_BUILD_WITH_DISTRIBUTION=1
+    MOZCONFIG=${HOME}/tor-browser/.mozconfig-android
+
+    export ANDROID_SDK_ROOT ANDROID_HOME ANDROID_NDK_HOME SDK_BASE NDK_BASE MOZCONFIG
+    echo "Sorry, we're resetting PATH"
+    export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${SDK_BASE}/platform-tools"
+
+    mach_bootstrap
+    if [ ! $? = 0 ]; then
+        echo "Bootstrap failed."
+        exit 1
+    fi
+
+    echo "Third, let's change the project name."
+    sed --in-place 's/ANDROID_PACKAGE_NAME=org.torproject.torbrowser/ANDROID_PACKAGE_NAME=org.torproject.torbrowser_alpha/' \
+        tor-browser/mobile/android/branding/torbrowser/configure.sh
+
+    echo "Fourth, let's configure it."
+    mach_configure
+    if [ ! $? = 0 ]; then
+        echo "Configure failed."
+        exit 1
+    fi
+
+    EXTENSIONS_DIR=tor-browser/mobile/android/torbrowser/assets/distribution/extensions/
+    mkdir -p "${EXTENSIONS_DIR}"
+
+    echo "Fifth, Build and copy torbutton."
+    build_torbutton
+    if [ ! $? = 0 ]; then
+        echo "Building torbutton failed."
+        exit 1
+    fi
+    copy_torbutton "${EXTENSIONS_DIR}"
+    if [ ! $? = 0 ]; then
+        echo "Copying torbutton failed."
+        exit 1
+    fi
+
+    echo "Six, Copy https-everywhere."
+    XPI_NAME=https-everywhere-${HTTPS_EVERYWHERE_GIT_TAG}-eff.xpi
+    build_https_everywhere "${XPI_NAME}"
+    if [ ! $? = 0 ]; then
+        echo "Building https-everywhere failed."
+        exit 1
+    fi
+    copy_https_everywhere "${XPI_NAME}" "${EXTENSIONS_DIR}"
+    if [ ! $? = 0 ]; then
+        echo "Copying https-everywhere failed."
+        exit 1
+    fi
+
+    echo "Seven, Copy NoScript."
+    copy_noscript "${EXTENSIONS_DIR}"
+    if [ ! $? = 0 ]; then
+        echo "Copying noscript failed."
+        exit 1
+    fi
+
+    echo "Eight, Build and package!"
+    pushd tor-browser
+    time ./mach build && time ./mach package
+    popd
+}
+
+build_tba

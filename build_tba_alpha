@@ -66,6 +66,10 @@ if [ -z "${MOZ_FORCE_BOOTSTRAP}" ]; then
     MOZ_FORCE_BOOTSTRAP=
 fi
 
+if [ -z "${IGNORE_GIT_TAG}" ]; then
+    IGNORE_GIT_TAG=
+fi
+
 
 TORSOCKS=
 
@@ -86,8 +90,12 @@ has_git_hash() {
 
     commit_hash=`git log -1 --pretty=format:%H ${GIT_TAG}`
     if [ ! $? = 0 ]; then
-        echo "Git tag '${GIT_TAG}' does not exist"
-        return 1;
+        if [ -n "${IGNORE_GIT_TAG}" ]; then
+            echo "Skipping git tag check"
+        else
+            echo "Git tag '${GIT_TAG}' does not exist"
+            return 1;
+        fi
     fi
     if [ "${commit_hash}" = "${GIT_COMMIT_HASH}" ]; then
         echo "Git commit hash '${GIT_COMMIT_HASH}' is good!"
@@ -106,9 +114,13 @@ has_git_tag_and_hash() {
     eval "GIT_TAG=\${${GIT_REPO_GIT_TAG}}"
     eval "EXPECTED_HASH=\${${GIT_REPO_GIT_COMMIT_HASH}}"
 
-    has_git_tag "${GIT_TAG}"
-    if [ ! $? = 0 ]; then
-        return 1
+    if [ -n "${IGNORE_GIT_TAG}" ]; then
+        echo "Skipping git tag check"
+    else
+        has_git_tag "${GIT_TAG}"
+        if [ ! $? = 0 ]; then
+            return 1
+        fi
     fi
     has_git_hash "${GIT_TAG}" "${EXPECTED_HASH}"
     if [ ! $? = 0 ]; then
@@ -267,7 +279,6 @@ checkout_torbrowser_tag() {
 }
 
 mach_artifact() {
-    # Yes, it assumes we're in .mozbuild
     pushd .mozbuild
     ../tor-browser/mach artifact toolchain --from-build linux64-clang
     save=$?
@@ -322,8 +333,8 @@ mach_bootstrap() {
 
 mach_configure() {
     pushd tor-browser
-    #git clean -fdx
-    ./mach configure --with-tor-browser-version=8.0 --with-distribution-id=org.torproject --enable-bundled-fonts
+    git clean -fdx
+    ./mach configure --with-tor-browser-version=8.0 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
     save=$?
     popd
     return $save
@@ -396,18 +407,20 @@ build_tba() {
     OLD_HOME="${HOME}"
     export HOME=`pwd`
 
-    ANDROID_NDK_HOME="${HOME}"/.mozbuild/android-ndk-r15c
-    ANDROID_SDK_HOME="${HOME}"/.mozbuild/android-sdk-linux
-    ANDROID_SDK_ROOT="${ANDROID_SDK_HOME}"
-    ANDROID_HOME="${ANDROID_SDK_ROOT}"
+    export ANDROID_NDK_HOME="${HOME}"/.mozbuild/android-ndk-r15c
+    export ANDROID_SDK_HOME="${HOME}"/.mozbuild/android-sdk-linux
+    export ANDROID_SDK_ROOT="${ANDROID_SDK_HOME}"
+    export ANDROID_HOME="${ANDROID_SDK_ROOT}"
 
-    NDK_BASE="${ANDROID_NDK_HOME}"
-    SDK_BASE="${ANDROID_SDK_HOME}"
+    export NDK_BASE="${ANDROID_NDK_HOME}"
+    export SDK_BASE="${ANDROID_SDK_HOME}"
 
-    TB_BUILD_WITH_DISTRIBUTION=1
-    MOZCONFIG=${HOME}/tor-browser/.mozconfig-android
+    export TB_BUILD_WITH_DISTRIBUTION=1
+    export MOZCONFIG=${HOME}/tor-browser/.mozconfig-android
 
-    export ANDROID_SDK_ROOT ANDROID_HOME ANDROID_NDK_HOME SDK_BASE NDK_BASE MOZCONFIG
+    # From `perl projects/firefox/get-moz-build-date 2018 60.1.0`
+    export MOZ_BUILD_DATE=20180204020101
+
     echo "Sorry, we're resetting PATH"
     export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${SDK_BASE}/platform-tools"
 

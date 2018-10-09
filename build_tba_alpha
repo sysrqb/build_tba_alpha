@@ -271,6 +271,30 @@ checkout_torbrowser_tag() {
 }
 
 mach_artifact() {
+    pushd tor-browser
+    # See: Bug 1467605 - Disable processing of fetch dependencies;
+    echo "diff --git a/python/mozbuild/mozbuild/mach_commands.py b/python/mozbuild/mozbuild/mach_commands.py
+index d542457824d7..b3956a0c7a89 100644
+--- a/python/mozbuild/mozbuild/mach_commands.py
++++ b/python/mozbuild/mozbuild/mach_commands.py
+@@ -1366,7 +1366,9 @@ class PackageFrontend(MachCommandBase):
+             from taskgraph.parameters import Parameters
+             params = Parameters(
+                 level=os.environ.get('MOZ_SCM_LEVEL', '3'),
+-                strict=False)
++                strict=False,
++                ignore_fetches=True,
++                )
+
+             # TODO: move to the taskcluster package
+             def tasks(kind_name):
+" | patch -p1
+    if [ ! "$?" = 0 ]; then
+        echo "Applying patch failed"
+        return 1
+    fi
+    popd
+
     pushd .mozbuild
     ../tor-browser/mach artifact toolchain --from-build linux64-clang
     save=$?

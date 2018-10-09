@@ -306,6 +306,8 @@ mach_bootstrap() {
         echo "Okay, let's run bootstrap"
     fi
     pushd tor-browser
+    # Replace this until #27494 is merged
+    sed -i 's/platforms;android-23/platforms;android-26/' python/mozboot/mozboot/android-packages.txt
     ./mach bootstrap --no-interactive --application-choice mobile_android
     save=$?
     if [ ! $? = 0 ]; then

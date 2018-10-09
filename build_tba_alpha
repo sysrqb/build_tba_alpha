@@ -70,7 +70,6 @@ if [ -z "${GET_SHELL}" ]; then
     GET_SHELL=
 fi
 
-
 TORSOCKS=
 
 has_git_tag() {
@@ -392,6 +391,10 @@ mach_configure() {
     echo $PATH
     pushd tor-browser
     #git clean -fdx
+    if [ -n "${TBA_PRERELEASE}" ]; then
+        sed -i 's/org.torproject.torbrowser_alpha/org.torproject.torbrowser_alpha_'${TBA_PRERELEASE}'/' mobile/android/branding/torbrowser/configure.sh
+        sed -i 's/Tor Browser for Android/('${TBA_PRERELEASE}') Tor Browser for Android/' mobile/android/branding/torbrowser/configure.sh
+    fi
     ./mach configure --with-tor-browser-version=8.0 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
     save=$?
     popd
@@ -475,6 +478,11 @@ build_tba() {
 
     export TB_BUILD_WITH_DISTRIBUTION=1
     export MOZCONFIG=${HOME}/tor-browser/.mozconfig-android
+
+    if [ -n "${TBA_PRERELEASE}" ]; then
+        echo "This is a pre-release build, tagged as '${TBA_PRERELEASE}'"
+        sleep 1
+    fi
 
     # From `perl projects/firefox/get-moz-build-date 2018 60.2.1`
     export MOZ_BUILD_DATE=20180204030201

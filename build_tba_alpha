@@ -395,7 +395,7 @@ mach_configure() {
         sed -i 's/org.torproject.torbrowser_alpha/org.torproject.torbrowser_alpha_'${TBA_PRERELEASE}'/' mobile/android/branding/torbrowser/configure.sh
         sed -i 's/Tor Browser for Android/('${TBA_PRERELEASE}') Tor Browser for Android/' mobile/android/branding/torbrowser/configure.sh
     fi
-    ./mach configure --with-tor-browser-version=8.0 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
+    ./mach configure --with-tor-browser-version=1.0 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
     save=$?
     popd
     return $save

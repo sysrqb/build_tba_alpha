@@ -238,7 +238,8 @@ fetch_extensions() {
     #for repo in TORBROWSER TORBUTTON HTTPS_EVERYWHERE;
     for repo in TORBROWSER TORBUTTON;
     do
-        fetch_or_fail $repo
+        fetch_or_fail ${repo}
+        checkout_repo_tag ${repo}
     done
 }
 
@@ -261,6 +262,20 @@ enter_tba_build_dir() {
     fi
     cd "${TBA_BUILD_DIR}"
     return $?
+}
+
+checkout_repo_tag() {
+    GIT_REPO="$1"
+    GIT_REPO_GIT_REPO_DIR="${GIT_REPO}_GIT_REPO_DIR"
+
+    eval "REPO_DIR=\${${GIT_REPO_GIT_REPO_DIR}}"
+    eval "GIT_TAG=\${${GIT_REPO_GIT_TAG}}"
+    success=0
+
+
+    pushd "${REPO_DIR}"
+    git checkout "${GIT_TAG}"
+    popd
 }
 
 checkout_torbrowser_tag() {

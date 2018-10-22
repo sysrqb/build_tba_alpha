@@ -9,10 +9,10 @@ if [ -z "${TORBROWSER_GIT_URL}" ]; then
     TORBROWSER_GIT_URL=https://git.torproject.org/tor-browser.git
 fi
 if [ -z "${TORBROWSER_GIT_TAG}" ]; then
-    TORBROWSER_GIT_TAG=tor-browser-60.2.1esr-8.5-1-build1
+    TORBROWSER_GIT_TAG=tor-browser-60.3.0esr-8.5-1-build1
 fi
 if [ -z "${TORBROWSER_GIT_COMMIT_HASH}" ]; then
-    TORBROWSER_GIT_COMMIT_HASH=0c004047822a94a6e16851a9f46d237be10eebce
+    TORBROWSER_GIT_COMMIT_HASH=d60cb3854f94d12f0aebdfff5abf30cc41418930
 fi
 if [ -z "${TORBROWSER_GIT_REPO_DIR}" ]; then
     TORBROWSER_GIT_REPO_DIR=tor-browser
@@ -21,10 +21,10 @@ if [ -z "${TORBUTTON_GIT_URL}" ]; then
     TORBUTTON_GIT_URL=https://git.torproject.org/torbutton.git
 fi
 if [ -z "${TORBUTTON_GIT_TAG}" ]; then
-    TORBUTTON_GIT_TAG=2.1
+    TORBUTTON_GIT_TAG=2.1.1
 fi
 if [ -z "${TORBUTTON_GIT_COMMIT_HASH}" ]; then
-    TORBUTTON_GIT_COMMIT_HASH=cd85d9dd4e0a225688d1785ff4cb421abca1e16a
+    TORBUTTON_GIT_COMMIT_HASH=d343226ef34e037ceb5dafec9242da80e380287b
 fi
 if [ -z "${TORBUTTON_GIT_REPO_DIR}" ]; then
     TORBUTTON_GIT_REPO_DIR=torbutton
@@ -33,7 +33,7 @@ if [ -z "${HTTPS_EVERYWHERE_GIT_URL}" ]; then
     HTTPS_EVERYWHERE_GIT_URL=https://git.torproject.org/https-everywhere.git
 fi
 if [ -z "${HTTPS_EVERYWHERE_GIT_TAG}" ]; then
-    HTTPS_EVERYWHERE_GIT_TAG=2018.8.22
+    HTTPS_EVERYWHERE_GIT_TAG=2018.9.19
 fi
 if [ -z "${HTTPS_EVERYWHERE_GIT_COMMIT_HASH}" ]; then
     HTTPS_EVERYWHERE_GIT_COMMIT_HASH=161a08daedaff6c4da2b653900f3977755453563
@@ -51,10 +51,10 @@ if [ -z "${HTTPS_EVERYWHERE_FILE}" ]; then
     HTTPS_EVERYWHERE_FILE=https-everywhere-eff@eff.org.xpi
 fi
 if [ -z "${NOSCRIPT_URL}" ]; then
-    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.8.16-an+fx.xpi
+    NOSCRIPT_URL=https://addons.cdn.mozilla.net/user-media/addons/722/noscript_security_suite-10.1.9.9-an+fx.xpi
 fi
 if [ -z "${NOSCRIPT_HASH}" ]; then
-    NOSCRIPT_HASH=fdc539412a61e6109b9fd331c90bd73faa787eefe1ee8d06b57dc3d906c541cd
+    NOSCRIPT_HASH=e7ec0345c2174e64c7552ab708a59c8efd7c1078fedda64d9c9ad06a899194b9
 fi
 if [ -z "${NOSCRIPT_FILE}" ]; then
     NOSCRIPT_FILE={73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
@@ -395,7 +395,7 @@ mach_configure() {
         sed -i 's/org.torproject.torbrowser_alpha/org.torproject.torbrowser_alpha_'${TBA_PRERELEASE}'/' mobile/android/branding/torbrowser/configure.sh
         sed -i 's/Tor Browser for Android/('${TBA_PRERELEASE}') Tor Browser for Android/' mobile/android/branding/torbrowser/configure.sh
     fi
-    ./mach configure --with-tor-browser-version=1.0 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
+    ./mach configure --with-tor-browser-version=1.0a3 --with-distribution-id=org.torproject --enable-update-channel=alpha --enable-bundled-fonts
     save=$?
     popd
     return $save

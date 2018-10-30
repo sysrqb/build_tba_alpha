@@ -234,7 +234,7 @@ download_extensions() {
     download_or_fail HTTPS_EVERYWHERE
 }
 
-fetch_extensions() {
+fetch_repos() {
     #for repo in TORBROWSER TORBUTTON HTTPS_EVERYWHERE;
     for repo in TORBROWSER TORBUTTON;
     do
@@ -267,20 +267,13 @@ enter_tba_build_dir() {
 checkout_repo_tag() {
     GIT_REPO="$1"
     GIT_REPO_GIT_REPO_DIR="${GIT_REPO}_GIT_REPO_DIR"
+    GIT_REPO_GIT_TAG="${GIT_REPO}_GIT_TAG"
 
     eval "REPO_DIR=\${${GIT_REPO_GIT_REPO_DIR}}"
     eval "GIT_TAG=\${${GIT_REPO_GIT_TAG}}"
-    success=0
-
 
     pushd "${REPO_DIR}"
     git checkout "${GIT_TAG}"
-    popd
-}
-
-checkout_torbrowser_tag() {
-    pushd tor-browser
-    git checkout "${TORBROWSER_GIT_TAG}"
     popd
 }
 
@@ -449,12 +442,9 @@ build_tba() {
     fi
 
     set_torsocks
+    echo "First, let's get all the components."
     download_extensions
-    fetch_extensions
-
-    echo "We have all the components. Now let's build!"
-    echo "First, let's checkout the tor-browser tag."
-    checkout_torbrowser_tag
+    fetch_repos
 
     echo "Second, let's confirm firefox is bootstrapped."
 

@@ -9,7 +9,7 @@ if [ -z "${TORBROWSER_GIT_URL}" ]; then
     TORBROWSER_GIT_URL=https://git.torproject.org/tor-browser.git
 fi
 if [ -z "${TORBROWSER_GIT_TAG}" ]; then
-    TORBROWSER_GIT_TAG=tor-browser-60.3.0esr-8.5-1-build1
+    TORBROWSER_GIT_TAG=tor-browser-mobile-60.3.0esr-1.0-build1
 fi
 if [ -z "${TORBROWSER_GIT_COMMIT_HASH}" ]; then
     TORBROWSER_GIT_COMMIT_HASH=2c4b103cfef5eafe276713478abf8bd1db057730

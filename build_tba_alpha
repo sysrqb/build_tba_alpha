@@ -434,6 +434,7 @@ copy_noscript() {
 }
 
 build_tba() {
+    tld=`pwd`
     enter_tba_build_dir
 
     if [ ! $? = 0 ]; then
@@ -467,8 +468,14 @@ build_tba() {
         sleep 1
     fi
 
-    # From `perl projects/firefox/get-moz-build-date 2018 60.2.1`
-    export MOZ_BUILD_DATE=20180204030201
+    unset MOZ_BUILD_DATE
+    version=`cat ${HOME}/tor-browser/browser/config/version.txt`
+    year=`date +%Y`
+    eval `perl ${tld}/get-moz-build-date ${year} ${version}`
+    if [ -z "${MOZ_BUILD_DATE}" ]; then
+        echo "MOZ_BUILD_DATE wasn't set!"
+        exit 1
+    fi
 
     echo "Sorry, we're resetting PATH"
     export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${SDK_BASE}/platform-tools"
